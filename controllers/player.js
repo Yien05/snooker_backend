@@ -13,11 +13,11 @@ const getPlayer = async (id) => {
 };
 
 // add new player
-const addNewPlayer = async (name) => {
+const addNewPlayer = async (name, image) => {
   // create new player
   const newPlayer = new Player({
     name,
-    //   image,
+    image,
   });
   // save the new player into mongodb
   await newPlayer.save();
@@ -34,8 +34,7 @@ const updatePlayer = async (id, name) => {
 };
 
 const deletePlayer = async (_id) => {
-  const deletePlayer = await Player.deleteOne({ _id });
-  return deletePlayer;
+ return await Player.findByIdAndDelete(id);
 };
 
 module.exports = {

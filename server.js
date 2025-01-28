@@ -35,7 +35,10 @@ app.use("/player", require("./routes/player"));
 app.use("/newd", require("./routes/newd"));
 app.use("/matche", require("./routes/matche"));
 app.use("/auth", require("./routes/user"));
+app.use("/image", require("./routes/image"));
 
+// set a folder as a static path
+app.use("/uploads", express.static("uploads"));
 // start the server
 app.listen(5555, () => {
   console.log("Server is running at http://localhost:5555");

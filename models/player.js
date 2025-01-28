@@ -7,7 +7,7 @@ const playerSchema = new Schema({
       type: String,
       required: true,
     },
-    // image: String,
+    image: String,
   });
 
   // convert the schema to a model

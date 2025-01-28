@@ -4,85 +4,96 @@ const mongoose = require("mongoose");
 const router = express.Router();
 
 const {
-    getPlayers,     
-    getPlayer,
-    addNewPlayer,
-    updatePlayer,
-    deletePlayer
+  getPlayers,
+  getPlayer,
+  addNewPlayer,
+  updatePlayer,
+  deletePlayer,
+} = require("../controllers/player");
 
-  } = require("../controllers/player");
+const { isValidUser, isAdmin } = require("../middleware/auth");
 
-  // get all Players
-  router.get("/", async (req,res) => {
-    try {
-      const players = await getPlayers();
-      res.status(200).json(players);
-    } catch (err) {
-      res.status(400).send({ error: "Error fetching player: " + err.message });
-    }
-  });
+// get all Players
+router.get("/", async (req, res) => {
+  try {
+    let players = await getPlayers(); // Fetch all players from the database
 
-  // get one player by id
-router.get("/:id", async (req, res) => {
-    try {
-      const id = req.params.id;
-      // Validate the ID format before querying the database
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-          error: `Invalid ID format: "${id}". A valid MongoDB ObjectId is required.`,
-        });
-      }
-      const player = await getPlayer(id);
-      if (player) {
-        res.status(200).send(player);
-      } else {
-        res.status(400).send("Player not Found");
-      }
-    } catch (error) {
-      res.status(400).send({
-        error: error._message,
-      });
-    }
-  });
-  
-  // add new player
-  router.post("/", async (req, res) => {
-    try {
-      // Retrieve the data from req.body
-      const name = req.body.name;
-    //   const image = req.body.image;
-      // Check for errors
-      if (!name ) {
-        return res.status(400).send({
-          error: "Error: Required player data is missing!",
-        });
-      }
-      // If no errors, pass in all the data to addNewPlayer function from controller
-      const newPlayer = await addNewPlayer(
-        name,
-        // image
+    // If there's a search query in the request
+    if (req.query.search) {
+      const searchKeyword = req.query.search.toLowerCase();
+
+      // Filter players by name based on the search keyword
+      players = players.filter(
+        (player) => player.name.toLowerCase().includes(searchKeyword) // Case-insensitive search
       );
-      res.status(200).send(newPlayer);
-    } catch (error) {
-      console.log(error);
-      // If there is an error, return the error code
-      res.status(400).send({
-        error: error._message,
+    }
+
+    // Return the filtered or unfiltered list of players
+    res.status(200).json(players);
+  } catch (err) {
+    res.status(400).send({ error: "Error fetching players: " + err.message });
+  }
+});
+
+// get one player by id
+router.get("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    // Validate the ID format before querying the database
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({
+        error: `Invalid ID format: "${id}". A valid MongoDB ObjectId is required.`,
       });
     }
-  });
+    const player = await getPlayer(id);
+    if (player) {
+      res.status(200).send(player);
+    } else {
+      res.status(400).send("Player not Found");
+    }
+  } catch (error) {
+    res.status(400).send({
+      error: error._message,
+    });
+  }
+});
 
-  // update player
-router.put("/:id", async (req, res) => {
+// add new player
+router.post("/", async (req, res) => {
+  try {
+    // Retrieve the data from req.body
+    const name = req.body.name;
+    const image = req.body.image;
+    // Check for errors
+    if (!name) {
+      return res.status(400).send({
+        error: "Error: Required player data is missing!",
+      });
+    }
+    // If no errors, pass in all the data to addNewPlayer function from controller
+    const newPlayer = await addNewPlayer(name,image);
+    res.status(200).send(newPlayer);
+  } catch (error) {
+    console.log(error);
+    // If there is an error, return the error code
+    res.status(400).send({
+      error: error._message,
+    });
+  }
+});
+
+// update player
+router.put("/:id", isAdmin, async (req, res) => {
   try {
     // Retrieve id from URL
     const id = req.params.id;
     const name = req.body.name;
+    const image = req.body.image;
     // Pass in the data into the updatePlayer function
-    const updatedPlayer = await updatePlayer(id, name);
+    const updatedPlayer = await updatePlayer(id, name, image);
     res.status(200).send(updatedPlayer);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     // If there is an error, return the error code
     res.status(400).send({
       error: error._message,
@@ -91,7 +102,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // delete Player
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",isAdmin, async (req, res) => {
   try {
     // Retrieve the id from the URL
     const id = req.params.id;
@@ -122,4 +133,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-  module.exports = router;
+module.exports = router;

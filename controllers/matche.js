@@ -32,12 +32,7 @@ const addNewMatche = async (name1, name2, date, score1, score2, time) => {
 const updateMatche = async (id, name1, name2, date, score1, score2, time) => {
   const updatedMatche = await Matche.findByIdAndUpdate(
     id,
-    { name1 },
-    { name2 },
-    { date },
-    { score1 },
-    { score2 },
-    { time },
+    { name1, name2, date, score1, score2, time },
     { new: true }
   );
   return updatedMatche;
