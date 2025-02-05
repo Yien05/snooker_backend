@@ -3,14 +3,18 @@ const { Schema, model } = require("mongoose");
 
 // setup the schema
 const newdSchema = new Schema({
-    name: {
-      type: String,
-      required: true,
-    },
-    // image: String,
-  });
+  name: {
+    type: String,
+    required: true,
+  },
+  detial: {
+    type: String,
+    required: true,
+  },
+  image: String,
+});
 
-  // convert the schema to a model
+// convert the schema to a model
 const Newd = model("Newd", newdSchema);
 
 module.exports = Newd;

@@ -15,20 +15,13 @@ const matcheSchema = new Schema({
     type: String,
     required: true,
   },
-  score1: {
-    type: Number,
-    required: true,
-  },
-  score2: {
-    type: Number,
-    required: true,
-  },
   time: {
     type: String,
     required: true,
   },
 
-  // image: String,
+  image1: String,
+  image2: String,
 });
 
 // convert the schema to a model

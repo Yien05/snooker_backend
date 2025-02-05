@@ -2,6 +2,16 @@ const express = require("express");
 const mongoose = require("mongoose");
 //create a router for Matche
 const router = express.Router();
+const multer = require("multer");
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
 
 const {
   getMatches,
@@ -10,6 +20,8 @@ const {
   updateMatche,
   deleteMatche,
 } = require("../controllers/matche");
+
+const { isValidUser, isAdmin } = require("../middleware/auth");
 
 // get all Matches
 router.get("/", async (req, res) => {
@@ -45,36 +57,33 @@ router.get("/:id", async (req, res) => {
 });
 
 // add new Matche
-router.post("/", async (req, res) => {
+router.post("/", isAdmin, async (req, res) => {
   try {
     // Retrieve the data from req.body
     const name1 = req.body.name1;
     const name2 = req.body.name2;
     const date = req.body.date;
-    const score1 = req.body.score1;
-    const score2 = req.body.score2;
     const time = req.body.time;
-    //   const image = req.body.image;
+    const image1 = req.body.image1;
+    const image2 = req.body.image2;
     // Check for errors
-    if (!name1 || !name2 || !date || !score1 || !score2 || !time) {
+    if (!name1 || !name2 || !date || !time) {
+      console.log(req.body);
       return res.status(400).send({
         error: "Error: Required Matche data is missing!",
       });
     }
-    // If no errors, pass in all the data to addNewMatche function from controller
     const newMatche = await addNewMatche(
       name1,
       name2,
       date,
-      score1,
-      score2,
-      time
-      // image
+      time,
+      image1,
+      image2
     );
     res.status(200).send(newMatche);
   } catch (error) {
     console.log(error);
-    // If there is an error, return the error code
     res.status(400).send({
       error: error._message,
     });
@@ -82,30 +91,20 @@ router.post("/", async (req, res) => {
 });
 
 // update Matche
-router.put("/:id", async (req, res) => {
+router.put("/:id", isAdmin, async (req, res) => {
   try {
     // Retrieve id from URL
     const id = req.params.id;
     const name1 = req.body.name1;
     const name2 = req.body.name2;
     const date = req.body.date;
-    const score1 = req.body.score1;
-    const score2 = req.body.score2;
     const time = req.body.time;
-    // Pass in the data into the updateMatche function
-    const updatedMatche = await updateMatche(
-      id,
-      name1,
-      name2,
-      date,
-      score1,
-      score2,
-      time
-    );
+    const image1 = req.body.image1;
+    const image2 = req.body.image2;
+    const updatedMatche = await updateMatche(id, name1, name2, date, time,image1,image2);
     res.status(200).send(updatedMatche);
   } catch (error) {
     console.log(error);
-    // If there is an error, return the error code
     res.status(400).send({
       error: error._message,
     });
@@ -113,25 +112,22 @@ router.put("/:id", async (req, res) => {
 });
 
 // delete Matche
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", isAdmin, async (req, res) => {
   try {
-    // Retrieve the id from the URL
     const id = req.params.id;
-    // Validate the ID format before querying the database
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).send({
         error: `Invalid ID format: "${id}". A valid MongoDB ObjectId is required.`,
       });
     }
     const matche = await getMatche(id);
-    // If the matche does not exist
+
     if (!matche) {
-      /* !matche because it is returning either a single object or null */
       return res.status(404).send({
         error: `Error: No match for a Matche found with the id "${id}".`,
       });
     }
-    // Trigger the deleteMatche function
     const status = await deleteMatche(id);
     res.status(200).send({
       message: `Alert: Matche with the provided id #${id} has been deleted`,

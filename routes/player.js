@@ -2,6 +2,16 @@ const express = require("express");
 const mongoose = require("mongoose");
 //create a router for players
 const router = express.Router();
+const multer = require("multer");
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
 
 const {
   getPlayers,
@@ -13,27 +23,25 @@ const {
 
 const { isValidUser, isAdmin } = require("../middleware/auth");
 
-// get all Players
+
 router.get("/", async (req, res) => {
   try {
-    let players = await getPlayers(); // Fetch all players from the database
+    const { name } = req.query; 
+    let players;
 
-    // If there's a search query in the request
-    if (req.query.search) {
-      const searchKeyword = req.query.search.toLowerCase();
-
-      // Filter players by name based on the search keyword
-      players = players.filter(
-        (player) => player.name.toLowerCase().includes(searchKeyword) // Case-insensitive search
-      );
+ 
+    if (name) {
+      players = await getPlayers(name);
+    } else {
+      players = await getPlayers();
     }
 
-    // Return the filtered or unfiltered list of players
     res.status(200).json(players);
   } catch (err) {
     res.status(400).send({ error: "Error fetching players: " + err.message });
   }
 });
+
 
 // get one player by id
 router.get("/:id", async (req, res) => {
@@ -59,7 +67,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // add new player
-router.post("/", async (req, res) => {
+router.post("/", isAdmin,async (req, res) => {
   try {
     // Retrieve the data from req.body
     const name = req.body.name;
@@ -71,7 +79,7 @@ router.post("/", async (req, res) => {
       });
     }
     // If no errors, pass in all the data to addNewPlayer function from controller
-    const newPlayer = await addNewPlayer(name,image);
+    const newPlayer = await addNewPlayer(name, image);
     res.status(200).send(newPlayer);
   } catch (error) {
     console.log(error);
@@ -102,7 +110,7 @@ router.put("/:id", isAdmin, async (req, res) => {
 });
 
 // delete Player
-router.delete("/:id",isAdmin, async (req, res) => {
+router.delete("/:id", isAdmin, async (req, res) => {
   try {
     // Retrieve the id from the URL
     const id = req.params.id;

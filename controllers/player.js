@@ -1,8 +1,11 @@
 const Player = require("../models/player");
 
-//get all player
-const getPlayers = async () => {
-  const players = await Player.find();
+// get all players with optional search query by name
+const getPlayers = async (searchTerm = "") => {
+  // If searchTerm is provided, filter by name (case insensitive)
+  const players = await Player.find({
+    name: { $regex: searchTerm, $options: "i" }, // 'i' for case-insensitive search
+  });
   return players;
 };
 
@@ -24,17 +27,17 @@ const addNewPlayer = async (name, image) => {
   return newPlayer;
 };
 
-const updatePlayer = async (id, name) => {
+const updatePlayer = async (id, name, image) => {
   const updatedPlayer = await Player.findByIdAndUpdate(
     id,
-    { name },
+    { name, image },
     { new: true }
   );
   return updatedPlayer;
 };
 
 const deletePlayer = async (_id) => {
- return await Player.findByIdAndDelete(id);
+  return await Player.findByIdAndDelete(_id);
 };
 
 module.exports = {
